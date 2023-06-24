@@ -32,7 +32,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
 
 		http.authorizeRequests() 
 		.antMatchers(HttpMethod.POST, "/user/").permitAll()
-        .antMatchers("/user/**").hasAnyAuthority("role_admin")
+        .antMatchers("/user/**").permitAll()
 		
 		//http.authorizeRequests().anyRequest().permitAll().and().cors().and().httpBasic().disable()
 				.and().exceptionHandling()
