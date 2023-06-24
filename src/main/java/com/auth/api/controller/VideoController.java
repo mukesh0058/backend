@@ -1,14 +1,12 @@
 package com.auth.api.controller;
 
+import com.auth.api.PathVariableDto;
 import com.auth.api.service.StreamGobbler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
@@ -105,10 +103,11 @@ public class VideoController {
     }
 
     @PostMapping(value = "/youtube/video-to-audio")
-    public String convertVideoToAudioForLink(@org.springframework.web.bind.annotation.RequestBody String URL) throws FileNotFoundException {
+    public String convertVideoToAudioForLink(@org.springframework.web.bind.annotation.RequestBody PathVariableDto pathVariableDto) throws FileNotFoundException {
         String fileNameWithExt = UUID.randomUUID().toString() + ".mp3";
         String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + fileNameWithExt;
 
+        String URL = pathVariableDto.getUrl();
         try {
             // Build the command
             ProcessBuilder processBuilder = new ProcessBuilder(
@@ -119,6 +118,7 @@ public class VideoController {
                     "--output", outputFilePath,
                     URL
             );
+            System.out.println("URL" + URL);
 
             // Redirect the error stream to the standard output
             processBuilder.redirectErrorStream(true);
