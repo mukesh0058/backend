@@ -13,7 +13,7 @@ security:
           xwIDAQAB
           -----END PUBLIC KEY-----
 server:
-  port: 9003
+  port: 3304
 spring:
   datasource:
     dbcp2:

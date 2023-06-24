@@ -49,7 +49,7 @@ public class VideoController {
             file.transferTo(videoFile);
 
             // Convert video to audio using FFmpeg
-            ProcessBuilder processBuilder = new ProcessBuilder("C:\\ffmpeg\\bin\\ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
+            ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
             Process process = processBuilder.start();
 
             StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), "ERROR");
