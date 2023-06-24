@@ -168,7 +168,7 @@ public class SwaggerConfig extends WebMvcConfigurationSupport {
 	
 	@SuppressWarnings("unchecked")
 	private Predicate<String> userPaths() {
-		return or(regex("/user.*"));
+		return or(regex("/user.*"), regex("/signup/"));
 	}
 
 	@PostConstruct
