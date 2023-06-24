@@ -1,23 +1,37 @@
 package com.auth.api.controller;
 
 import com.auth.api.service.StreamGobbler;
-import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import org.springframework.util.ResourceUtils;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
 public class VideoController {
+
+    @Autowired
+    private S3Client s3Client;
+
+    @Value("${aws.bucket}")
+    private String bucket;
 
     @PostMapping(value = "/video-to-audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String convertVideoToAudio(@RequestParam("file") MultipartFile file) {
@@ -26,15 +40,16 @@ public class VideoController {
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
             // Generate unique filenames using UUID
-            String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
-            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/video/" + java.util.UUID.randomUUID().toString() + ".mp3";
+            String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/video/" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
+            String audioFileWithExt = UUID.randomUUID().toString() + ".mp3";
+            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + audioFileWithExt;
 
             // Save the uploaded video file
             File videoFile = new File(videoFilename);
             file.transferTo(videoFile);
 
             // Convert video to audio using FFmpeg
-            ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
+            ProcessBuilder processBuilder = new ProcessBuilder("C:\\ffmpeg\\bin\\ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
             Process process = processBuilder.start();
 
             StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), "ERROR");
@@ -47,6 +62,9 @@ public class VideoController {
 
             int exitCode = process.waitFor();
             if (exitCode == 0) {
+
+                uploadFileInS3(audioFileWithExt, audioFilename);
+
                 System.out.println("Download completed successfully!");
             } else {
                 System.out.println("Download failed with exit code: " + exitCode);
@@ -54,16 +72,34 @@ public class VideoController {
 
             // Delete the temporary video file
             videoFile.delete();
-            return audioFilename;
+            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFilename;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return "Error converting video to audio";
         }
     }
 
+    private void uploadFileInS3(String audioFileWithExt, String audioFilename) {
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(audioFileWithExt)
+                .acl("public-read-write")
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromFile(new File(audioFilename)));
+
+        S3Waiter waiter = s3Client.waiter();
+        HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(audioFileWithExt).build();
+
+        WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
+
+        waiterResponse.matched().response().ifPresent(System.out::println);
+    }
+
     @PostMapping(value = "/youtube/video-to-audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String convertVideoToAudioForLink(@RequestParam("URL") String URL) throws FileNotFoundException {
-        String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + java.util.UUID.randomUUID().toString() + ".mp3";
+        String fileNameWithExt = UUID.randomUUID().toString() + ".mp3";
+        String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + fileNameWithExt;
 
         try {
             // Build the command
@@ -94,11 +130,12 @@ public class VideoController {
             int exitCode = process.waitFor();
             if (exitCode == 0) {
                 System.out.println("Download completed successfully!");
-
+                uploadFileInS3(fileNameWithExt, outputFilePath);
             } else {
                 System.out.println("Download failed with exit code: " + exitCode);
             }
-            return outputFilePath;
+            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + fileNameWithExt;
+            // return outputFilePath;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return "Error converting video to audio";

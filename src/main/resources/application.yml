@@ -39,3 +39,8 @@ spring:
         dialect: org.hibernate.dialect.MySQL5Dialect
 logging:
   file: logfile.log
+aws:
+  accessKey: AKIAUT4R2HOZRTBXKAEP
+  secretKey: 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
+  region: us-west-2
+  bucket: uploadedaudio
