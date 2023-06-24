@@ -1,6 +1,7 @@
 package com.auth.api.controller;
 
 import com.auth.api.service.StreamGobbler;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -21,6 +22,9 @@ import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 @RestController
@@ -72,7 +76,7 @@ public class VideoController {
 
             // Delete the temporary video file
             videoFile.delete();
-            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFilename;
+            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFileWithExt;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return "Error converting video to audio";
@@ -97,7 +101,7 @@ public class VideoController {
     }
 
     @PostMapping(value = "/youtube/video-to-audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String convertVideoToAudioForLink(@RequestParam("URL") String URL) throws FileNotFoundException {
+    public String convertVideoToAudioForLink(@org.springframework.web.bind.annotation.RequestBody String URL) throws FileNotFoundException {
         String fileNameWithExt = UUID.randomUUID().toString() + ".mp3";
         String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + fileNameWithExt;
 
@@ -140,5 +144,44 @@ public class VideoController {
             e.printStackTrace();
             return "Error converting video to audio";
         }
+    }
+
+    @PostMapping("/webhook")
+    public String muxWebHook(@org.springframework.web.bind.annotation.RequestBody String body) {
+      System.out.println("Mux Webhook received "+ body);
+
+                try {
+                    JSONObject jsonBody = new JSONObject(body);
+                    JSONObject jj = (JSONObject) jsonBody.get("payload");
+                    final String plainToken = jj.getString("plainToken");
+                    String hashedPlainToken = generateHash(plainToken);
+                    System.out.println("Hashed plainToken: " + hashedPlainToken);
+
+                    JSONObject j  = new JSONObject();
+                    j.put("plainToken",plainToken);
+                    j.put("encryptedToken",hashedPlainToken);
+                    System.out.println("Hashed plainToken: " + j.toString());
+                    return j.toString();
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                }
+      return null;
+    }
+
+    public static String generateHash(String plainToken) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] encodedHash = digest.digest(plainToken.getBytes(StandardCharsets.UTF_8));
+
+        // Convert the byte array to hexadecimal format
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : encodedHash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+
+        return hexString.toString();
     }
 }
