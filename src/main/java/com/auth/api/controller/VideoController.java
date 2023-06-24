@@ -48,8 +48,13 @@ public class VideoController {
             File videoFile = new File(videoFilename);
             file.transferTo(videoFile);
 
+            ProcessBuilder processBuilder = null;
             // Convert video to audio using FFmpeg
-            ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
+            if (fileExtension.equalsIgnoreCase("3gp")) {
+                processBuilder = new ProcessBuilder("ffmpeg", "-i", videoFile.getAbsolutePath(), "-c:a", "libmp3lame", audioFilename);
+            }else{
+                processBuilder = new ProcessBuilder("ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
+            }
             Process process = processBuilder.start();
 
             StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), "ERROR");
