@@ -101,8 +101,8 @@ public class VideoController {
         waiterResponse.matched().response().ifPresent(System.out::println);
     }
 
-    @PostMapping(value = "/youtube/video-to-audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String convertVideoToAudioForLink(@RequestParam("URL") String URL) throws FileNotFoundException {
+    @PostMapping(value = "/youtube/video-to-audio")
+    public String convertVideoToAudioForLink(@org.springframework.web.bind.annotation.RequestBody String URL) throws FileNotFoundException {
         String fileNameWithExt = UUID.randomUUID().toString() + ".mp3";
         String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + fileNameWithExt;
 
