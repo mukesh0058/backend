@@ -1,12 +1,15 @@
 package com.auth.api.controller;
 
 import com.auth.api.service.StreamGobbler;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +25,8 @@ public class VideoController {
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
             // Generate unique filenames using UUID
-            String videoFilename = "D:\\Hackthon\\backend\\" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
-            String audioFilename = "D:\\Hackthon\\backend\\" + java.util.UUID.randomUUID().toString() + ".mp3";
+            String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\audio\\" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
+            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\video\\" + java.util.UUID.randomUUID().toString() + ".mp3";
 
             // Save the uploaded video file
             File videoFile = new File(videoFilename);
