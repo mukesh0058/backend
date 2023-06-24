@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 @RestController
@@ -52,6 +53,54 @@ public class VideoController {
             int exitVal = process.waitFor();
 
             return audioFilename;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return "Error converting video to audio";
+        }
+    }
+
+    @PostMapping(value = "/youtube/video-to-audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String convertVideoToAudioForLink(@RequestParam("URL") String URL) throws FileNotFoundException {
+        // String youtubeUrl = "https://www.youtube.com/watch?v=fuzQF5HDk50";
+       // String outputFilePath = "Documents/1s.mp3";
+
+       //  String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\audio\\" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
+        String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\video\\" + java.util.UUID.randomUUID().toString() + ".mp3";
+
+        try {
+            // Build the command
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    "yt-dlp",
+                    "--extract-audio",
+                    "--audio-format", "mp3",
+                    "--audio-quality", "0",
+                    "--output", outputFilePath,
+                    URL
+            );
+
+            // Redirect the error stream to the standard output
+            processBuilder.redirectErrorStream(true);
+
+            // Start the process
+            Process process = processBuilder.start();
+
+
+            StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), "ERROR");
+            // any output?
+            StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), "OUTPUT");
+
+            // kick them off
+            errorGobbler.start();
+            outputGobbler.start();
+
+            // Read the output of the process
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                System.out.println("Download completed successfully!");
+            } else {
+                System.out.println("Download failed with exit code: " + exitCode);
+            }
+            return URL;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return "Error converting video to audio";
