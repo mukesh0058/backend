@@ -26,15 +26,15 @@ public class VideoController {
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
             // Generate unique filenames using UUID
-            String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\audio\\" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
-            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\video\\" + java.util.UUID.randomUUID().toString() + ".mp3";
+            String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
+            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/video/" + java.util.UUID.randomUUID().toString() + ".mp3";
 
             // Save the uploaded video file
             File videoFile = new File(videoFilename);
             file.transferTo(videoFile);
 
             // Convert video to audio using FFmpeg
-            ProcessBuilder processBuilder = new ProcessBuilder("C:\\ffmpeg\\bin\\ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
+            ProcessBuilder processBuilder = new ProcessBuilder("ffmpeg", "-i", videoFile.getAbsolutePath(), audioFilename);
             Process process = processBuilder.start();
             // process.waitFor();
 
@@ -64,8 +64,8 @@ public class VideoController {
         // String youtubeUrl = "https://www.youtube.com/watch?v=fuzQF5HDk50";
        // String outputFilePath = "Documents/1s.mp3";
 
-       //  String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\audio\\" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
-        String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "\\video\\" + java.util.UUID.randomUUID().toString() + ".mp3";
+        //String videoFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + java.util.UUID.randomUUID().toString() + "." + fileExtension;
+        String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/video/" + java.util.UUID.randomUUID().toString() + ".mp3";
 
         try {
             // Build the command
