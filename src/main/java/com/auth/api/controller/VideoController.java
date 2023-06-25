@@ -85,6 +85,27 @@ public class VideoController {
         }
     }
 
+    @PostMapping(value = "/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String saveAudioFile(@RequestParam("file") MultipartFile file) {
+        try {
+
+            String originalFilename = file.getOriginalFilename();
+            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+            // Generate unique filenames using UUID
+            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + file.getOriginalFilename();
+
+            uploadFileInS3(originalFilename, File.createTempFile("originalFilename", null));
+
+            System.out.println("Download uploaded successfully!");
+
+            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFilename;
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            return "Error converting video to audio";
+        }
+    }
+
     private void uploadFileInS3(String audioFileWithExt, String audioFilename) {
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -93,6 +114,23 @@ public class VideoController {
                 .build();
 
         s3Client.putObject(request, RequestBody.fromFile(new File(audioFilename)));
+
+        S3Waiter waiter = s3Client.waiter();
+        HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(audioFileWithExt).build();
+
+        WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
+
+        waiterResponse.matched().response().ifPresent(System.out::println);
+    }
+
+    private void uploadFileInS3(String audioFileWithExt, File audioFilename) {
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(audioFileWithExt)
+                .acl("public-read-write")
+                .build();
+
+        s3Client.putObject(request, RequestBody.fromFile(audioFilename));
 
         S3Waiter waiter = s3Client.waiter();
         HeadObjectRequest requestWait = HeadObjectRequest.builder().bucket(bucket).key(audioFileWithExt).build();
