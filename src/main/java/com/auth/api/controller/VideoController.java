@@ -78,7 +78,7 @@ public class VideoController {
 
             // Delete the temporary video file
             videoFile.delete();
-            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFilename;
+            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFileWithExt;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return "Error converting video to audio";
