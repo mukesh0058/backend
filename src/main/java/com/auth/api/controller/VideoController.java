@@ -91,16 +91,18 @@ public class VideoController {
 
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+            String upadatedFileName = UUID.randomUUID().toString() + "." + fileExtension;
             // Generate unique filenames using UUID
-            String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + file.getOriginalFilename();
+           // String audioFilename = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + file.getOriginalFilename();
 
-            uploadFileInS3(originalFilename, File.createTempFile("originalFilename", null));
+            File audioFilename = File.createTempFile(originalFilename, null);
+            file.transferTo(audioFilename);
+            uploadFileInS3(upadatedFileName, audioFilename);
 
             System.out.println("Download uploaded successfully!");
 
-            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + audioFilename;
-        }
-        catch (IOException e) {
+            return "https://uploadedaudio.s3.us-west-2.amazonaws.com/" + upadatedFileName;
+        } catch (IOException e) {
             e.printStackTrace();
             return "Error converting video to audio";
         }
