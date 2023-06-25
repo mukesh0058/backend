@@ -1,5 +1,6 @@
 package com.auth.api.controller;
 
+import com.auth.api.model.PathVariableDto;
 import com.auth.api.service.StreamGobbler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -102,10 +103,10 @@ public class VideoController {
     }
 
     @PostMapping(value = "/youtube/video-to-audio")
-    public String convertVideoToAudioForLink(@org.springframework.web.bind.annotation.RequestBody String URL) throws FileNotFoundException {
+    public String convertVideoToAudioForLink(@org.springframework.web.bind.annotation.RequestBody PathVariableDto pathVariableDto) throws FileNotFoundException {
         String fileNameWithExt = UUID.randomUUID().toString() + ".mp3";
         String outputFilePath = ResourceUtils.getFile("classpath:").getAbsolutePath() + "/audio/" + fileNameWithExt;
-
+        String URL = pathVariableDto.getUrl();
         try {
             // Build the command
             ProcessBuilder processBuilder = new ProcessBuilder(
